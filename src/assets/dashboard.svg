@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" fill="none" viewBox="0 0 96 96" id="dashboard">
+  <rect width="32" height="32" x="10" y="54" stroke="#000" stroke-width="5" rx="9"></rect>
+  <rect width="32" height="32" x="10" y="10" stroke="#000" stroke-width="5" rx="9"></rect>
+  <rect width="32" height="32" x="54" y="54" stroke="#000" stroke-width="5" rx="9"></rect>
+  <rect width="32" height="32" x="54" y="10" stroke="#000" stroke-width="5" rx="9"></rect>
+</svg>

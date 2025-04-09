@@ -1,0 +1,17 @@
+/* Style to make images full width inside the editor */
+.ql-editor img {
+    max-width: 100% !important;  /* Ensure image takes full width */
+    height: auto !important;     /* Maintain aspect ratio */
+    display: block;   /* Block display for better layout */
+    margin: 0 auto;   /* Center the image */
+  }
+  
+  .uploaded-image {
+    max-width: 100%;
+    width: 100%;
+    height: 60vh;
+    margin: 20px auto;
+    display: block;
+    object-fit: cover;
+  }
+  

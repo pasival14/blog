@@ -1,0 +1,25 @@
+.artboard {
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  
+  .artboard::-webkit-scrollbar {
+    width: 0;
+  }
+  
+  .artboard::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2); /* Subtle color */
+    border-radius: 10px;
+  }
+  
+  .artboard::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .home-btn {
+    position: sticky;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 20px;
+  }
