@@ -1,4 +1,6 @@
-import { useState } from 'react';
+// src/components/AdminPanel.jsx
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom'; // Import useLocation and useNavigate
 import Analytics from './admin/Analytics';
 import CreatePost from './admin/CreatePost';
 import Dashboard from './admin/Dashboard';
@@ -9,7 +11,25 @@ import Profile from './admin/Profile';
 import './admin.css';
 
 const AdminPanel = () => {
+  const location = useLocation();
+  const navigate = useNavigate(); // Get navigate function
+
+  // Default to 'dashboard' initially
   const [activeSection, setActiveSection] = useState('dashboard');
+
+  // Effect to check location state AFTER initial render or when state changes
+  useEffect(() => {
+    // Check if the state specifically contains the instruction to go to inbox
+    if (location.state?.activeSection === 'inbox') {
+      setActiveSection('inbox');
+
+      // IMPORTANT: Clear the state after reading it to prevent issues on refresh or back navigation.
+      // The Inbox component also tries to clear it, but doing it here ensures AdminPanel has processed it.
+      // navigate(location.pathname, { replace: true, state: {} });
+
+    }
+    // Add location.state as a dependency. If it changes, this effect re-runs.
+  }, [location.state]); // Add navigate to dependency array
 
   const renderSection = () => {
     switch (activeSection) {
@@ -22,12 +42,15 @@ const AdminPanel = () => {
       case 'analytics':
         return <Analytics />;
       case 'inbox':
+         // No need to pass state down anymore as Inbox reads it directly,
+         // and this parent component now handles setting the activeSection correctly.
         return <Inbox />;
       case 'profile':
         return <Profile />;
       case 'earnings':
         return <Earnings />;
       default:
+        // Fallback to dashboard if section is unknown
         return <Dashboard />;
     }
   };
@@ -50,11 +73,12 @@ const AdminPanel = () => {
           <ul className="menu rounded-box gap-3">
             {menuItems.map((item) => (
               <li key={item.id} onClick={() => setActiveSection(item.id)}>
+                {/* Use button or simple element, ensure accessibility */}
                 <button
-                  className={activeSection === item.id ? 'active' : ''}
+                  className={`${activeSection === item.id ? 'active btn btn-active' : 'btn btn-ghost'} justify-start`} // DaisyUI active class + btn classes
                   aria-current={activeSection === item.id ? 'page' : undefined}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5 mr-2"> {/* Adjusted size and margin */}
                     <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                   </svg>
                   {item.label}
@@ -65,8 +89,12 @@ const AdminPanel = () => {
         </div>
 
         {/* Main Content */}
-        <div className='col-span-4 h-[87vh] mx-4 bg-base-300 rounded-2xl p-4'>
-          {renderSection()}
+        {/* Ensure content area takes height properly */}
+        <div className='col-span-4 h-[87vh] mx-4 bg-base-300 rounded-2xl p-1 md:p-4 overflow-hidden'> {/* Adjusted padding, overflow hidden */}
+           {/* Render the section based on the state */}
+           <div className="w-full h-full overflow-y-auto"> {/* Add scroll container */}
+             {renderSection()}
+           </div>
         </div>
       </div>
     </div>
@@ -74,4 +102,3 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
-
