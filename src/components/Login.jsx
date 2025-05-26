@@ -182,6 +182,11 @@ const Login = ({ setIsAuth }) => {
                 });
             } // If no new imageFile, finalProfilePictureUrl remains the one from Google or preview
 
+            await updateProfile(user, {
+                displayName: name.trim(),
+                photoURL: finalProfilePictureUrl // Update photoURL here too
+            });
+
             // Save profile data to Firestore
             const profileRef = doc(db, "profiles", user.uid);
             await setDoc(profileRef, {

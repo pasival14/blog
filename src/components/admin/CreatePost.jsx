@@ -9,10 +9,10 @@ const CreatePost = () => {
   const [imageUrl, setImageUrl] = useState(null);
 
   return (
-    <div className="grid grid-cols-5 h-full">
+    <div className="mt-12 md:mt-0 md:grid grid-cols-5 h-full">
       <div className="col-span-3 flex flex-col my-6 overflow-y-auto">
-        <h2 className="text-2xl font-semibold text-center">Create Post</h2>
-        <div className="mt-4 mx-6">
+        <h2 className="text-xl md:text-2xl font-semibold text-center">Create Post</h2>
+        <div className="mt-4 mx-2 md:mx-6">
           <PostForm
             title={title}
             setTitle={setTitle}
@@ -25,7 +25,7 @@ const CreatePost = () => {
         </div>
       </div>
       
-      <div className="col-span-2 h-full mx-auto">
+      <div className="hidden md:block col-span-2 h-full mx-auto">
         <div className="mockup-phone h-fit">
           <div className="camera"></div>
           <div className="display">
@@ -35,7 +35,7 @@ const CreatePost = () => {
                 {imageUrl && <img src={imageUrl} alt="Preview" className="my-2 w-full h-auto"/>}
                 {/* <p className="text-sm my-2">{excerpt || "Preview excerpt..."}</p> */}
                 <div
-                className="text-xs text-balance"
+                className="text-xs"
                 dangerouslySetInnerHTML={{ __html: content || "Start typing content..." }}
                 />
               </div>

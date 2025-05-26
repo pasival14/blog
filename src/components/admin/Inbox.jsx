@@ -8,6 +8,23 @@ import {
 import { db, auth } from '../../services/firebase';
 import { getConversationId } from '../../utils/messagingUtils'; // Adjust path if needed
 
+// --- Back Icon SVG ---
+const BackIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+    </svg>
+);
+
+// Default Avatar (if needed, or use existing user icon logic)
+const DefaultAvatar = ({ className = "w-8 h-8" }) => (
+    <div className={`${className} rounded-full bg-base-300 flex items-center justify-center`}>
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+        </svg>
+    </div>
+);
+
+
 const Inbox = () => {
     const [conversations, setConversations] = useState([]);
     const [selectedConversation, setSelectedConversation] = useState(null);
@@ -21,7 +38,10 @@ const Inbox = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Effect to handle initial conversation opening AND ensure it exists
+    // --- NEW STATE: Manage view mode for mobile ---
+    const [mobileView, setMobileView] = useState('list'); // 'list' or 'conversation'
+
+    // --- Effect to handle initial conversation opening (MODIFIED) ---
     useEffect(() => {
         const handleInitialConversation = async () => {
 
@@ -36,11 +56,12 @@ const Inbox = () => {
                 console.log("Recipient profile:", recipientProfile);
 
                 // --- 1. Prepare Participant Info ---
-                const participantInfo = recipientProfile ? {
+                 const participantInfo = recipientProfile ? {
                     uid: recipientProfile.uid || recipientProfile.id,
                     name: recipientProfile.name || 'Unknown User',
                     photoURL: recipientProfile.profilePictureUrl || ''
                 } : null;
+
 
                 if (!participantInfo?.uid) {
                     console.warn("Recipient profile data incomplete.");
@@ -51,20 +72,17 @@ const Inbox = () => {
 
                 // --- 2. Check/Create Conversation Document ---
                 const conversationRef = doc(db, 'conversations', openConversationId);
-                let conversationDataForState = null; // To hold data for optimistic update
+                let finalConversationData; // Store the data whether created or fetched
 
                 try {
                     const conversationSnap = await getDoc(conversationRef);
-                    let finalConversationData; // Data used for state updates
 
                     if (!conversationSnap.exists()) {
                         // Create it
                         console.log(`Creating conversation ${openConversationId}...`);
-                        /* // Profile fetching still commented out */
-
-                         const participantsArray = [currentUser.uid, participantInfo.uid].sort(); // Define explicitly
-                         finalConversationData = {
-                            participants: [currentUser.uid, participantInfo.uid].sort(),
+                         const participantsArray = [currentUser.uid, participantInfo.uid].sort();
+                         finalConversationData = { // Assign to the outer variable
+                            participants: participantsArray,
                             participantInfo: {
                                 [currentUser.uid]: {
                                     name: currentUser.displayName || 'Current User',
@@ -75,76 +93,40 @@ const Inbox = () => {
                                     photoURL: participantInfo.photoURL
                                 }
                             },
-                            lastMessageTimestamp: serverTimestamp(), // Include server timestamp
-                            lastMessageText: '',                    // Include empty text
-                            createdAt: serverTimestamp()           // Include server timestamp
+                            lastMessageTimestamp: serverTimestamp(),
+                            lastMessageText: '',
+                            createdAt: serverTimestamp()
                         };
-
-                         // ---> START: Add these console logs <---
-                         console.log("--- Debugging Create ---");
-                         console.log("Current User UID:", currentUser.uid);
-                         console.log("Recipient UID:", participantInfo.uid);
-                         console.log("Participants Array to Write:", participantsArray);
-                         const calculatedId = participantsArray.join('_');
-                         console.log("Client Calculated ID:", calculatedId);
-                         console.log("Conversation Ref Path ID:", conversationRef.id); // conversationRef was defined earlier as doc(db, 'conversations', openConversationId)
-                         console.log("Data being sent:", JSON.stringify(finalConversationData)); // Log the exact object
-                         console.log("--- End Debugging Create ---");
-                         // ---> END: Add these console logs <---
-
-                        // Attempt to write only the participants array
-                        await setDoc(conversationRef, finalConversationData); // This is the line failing
+                        await setDoc(conversationRef, finalConversationData);
                         console.log(`Conversation ${openConversationId} created.`);
                     } else {
-                         // ...
+                        finalConversationData = conversationSnap.data(); // Use existing data
+                         console.log(`Conversation ${openConversationId} exists.`);
                     }
 
-                     // Prepare the object for state updates (use client-side date for optimistic timestamp)
-                    //  conversationDataForState = {
-                    //      id: openConversationId,
-                    //      ...finalConversationData,
-                    //      // Convert server timestamps placeholders/actual to JS Dates for immediate state use
-                    //      lastMessageTimestamp: finalConversationData.lastMessageTimestamp instanceof Timestamp
-                    //         ? finalConversationData.lastMessageTimestamp
-                    //         : new Timestamp(Math.floor(Date.now()/1000), 0), // Use current time if serverTimestamp was placeholder
-                    //      createdAt: finalConversationData.createdAt instanceof Timestamp
-                    //         ? finalConversationData.createdAt
-                    //         : new Timestamp(Math.floor(Date.now()/1000), 0), // Use current time if serverTimestamp was placeholder
-                    //       // Construct the 'otherParticipant' object needed for rendering/selection
-                    //      otherParticipant: {
-                    //          uid: participantInfo.uid,
-                    //          name: participantInfo.name,
-                    //          photoURL: participantInfo.photoURL
-                    //      }
-                    //  };
+                     // --- Prepare state data including otherParticipant ---
+                     // Ensure we use the correct participant info structure
+                     const otherParticipantData = finalConversationData.participantInfo?.[participantInfo.uid] || {
+                         name: participantInfo.name, // Fallback to passed-in info
+                         photoURL: participantInfo.photoURL
+                     };
+
+                     console.log("Other participant data for state:", otherParticipantData);
 
 
-                    // // --- 3. Optimistic UI Update for Conversation List ---
-                    // // Add/Update the conversation in the local list immediately
-                    // setConversations(prev => {
-                    //     const existsInList = prev.some(conv => conv.id === openConversationId);
-                    //     if (!existsInList) {
-                    //         // Add the new conversation, maintaining sort order (or simply prepend/append)
-                    //          // Prepend for most recent based on creation attempt time
-                    //         return [conversationDataForState, ...prev].sort((a, b) => {
-                    //             const timeA = a.lastMessageTimestamp?.seconds ?? 0;
-                    //             const timeB = b.lastMessageTimestamp?.seconds ?? 0;
-                    //             return timeB - timeA; // Descending order
-                    //         });
-                    //     } else {
-                    //          // If it somehow exists (e.g., fast snapshot), update it
-                    //          return prev.map(conv => conv.id === openConversationId ? conversationDataForState : conv);
-                    //     }
-                    // });
-
-
-                    // --- 4. Set Selected Conversation ---
+                    // --- 3. Set Selected Conversation AND Mobile View ---
                     setSelectedConversation({
                         id: openConversationId,
-                        otherParticipant: { uid: participantInfo.uid, name: participantInfo.name, photoURL: participantInfo.photoURL }
+                        otherParticipant: {
+                            uid: participantInfo.uid, // Crucial: Ensure UID is set correctly
+                            name: otherParticipantData.name,
+                            photoURL: otherParticipantData.photoURL
+                        }
                     });
+                    setMobileView('conversation'); // <<<--- SET VIEW TO CONVERSATION ON MOBILE
+                    // ------------------------------------------------
 
-                    // --- 5. Clear State *AFTER* successful processing --- <<<< MOVED HERE
+                    // --- 4. Clear State *AFTER* successful processing ---
                     navigate(location.pathname, { replace: true, state: {} });
                     stateCleared = true; // Mark state as cleared
                     console.log("Navigation state cleared successfully after processing.");
@@ -154,10 +136,8 @@ const Inbox = () => {
                     console.error("Error handling initial conversation:", err);
                     setError("Failed to initialize the conversation.");
                 } finally {
-                    // --- Ensure state is cleared if an error occurred before step 5 ---
+                    // --- Ensure state is cleared if an error occurred before step 4 ---
                     if (!stateCleared) {
-                         // Only clear here if it wasn't cleared in the try block
-                         // This handles errors during async operations before step 5
                          console.log("Clearing navigation state in finally block (error occurred).");
                          navigate(location.pathname, { replace: true, state: {} });
                     }
@@ -174,7 +154,7 @@ const Inbox = () => {
     }, [location.state, navigate, currentUser]);
 
 
-    // Fetch conversations (onSnapshot listener) - Listens for real-time changes
+    // Fetch conversations (onSnapshot listener)
     useEffect(() => {
         if (!currentUser) {
             setLoadingConversations(false);
@@ -190,59 +170,75 @@ const Inbox = () => {
         );
         const unsubscribe = onSnapshot(convQuery, async (querySnapshot) => {
             const convList = [];
-            const profilePromises = [];
+            const profilePromises = []; // To fetch missing profiles
 
             querySnapshot.forEach((docSnap) => {
                 const data = docSnap.data();
                 const otherUid = data.participants?.find(uid => uid !== currentUser.uid);
-                 if (!otherUid) return; // Skip if data is incomplete
+                 if (!otherUid) {
+                      console.warn(`Conversation ${docSnap.id} missing other participant.`);
+                      return; // Skip incomplete conversation data
+                 }
 
                 let participantInfo = data.participantInfo?.[otherUid];
                 let needsFetching = false;
 
-                if (!participantInfo) {
+                // Check if info exists and is valid
+                if (!participantInfo || !participantInfo.name) {
+                    console.log(`Profile info missing or incomplete for UID ${otherUid} in conv ${docSnap.id}. Marking for fetch.`);
                     needsFetching = true;
                     profilePromises.push(
                          getDoc(doc(db, 'profiles', otherUid)).then(profileSnap => ({
                             convId: docSnap.id, otherUid: otherUid,
                             profileData: profileSnap.exists() ? profileSnap.data() : null
-                        }))
+                        })).catch(err => {
+                             console.error(`Failed to fetch profile for UID ${otherUid}:`, err);
+                             return { convId: docSnap.id, otherUid: otherUid, profileData: null }; // Return null data on error
+                        })
                     );
+                     // Prepare a placeholder structure
+                     participantInfo = { uid: otherUid, name: 'Loading...', photoURL: '', needsFetching: true };
+                } else {
+                     // Ensure the structure includes UID even if fetched from participantInfo
+                     participantInfo = { uid: otherUid, ...participantInfo, needsFetching: false };
                 }
 
-                 // Ensure Timestamps are handled correctly
                  const lastMsgTs = data.lastMessageTimestamp instanceof Timestamp ? data.lastMessageTimestamp : null;
                  const createdTs = data.createdAt instanceof Timestamp ? data.createdAt : null;
 
                 convList.push({
                     id: docSnap.id,
-                    ...data,
-                     lastMessageTimestamp: lastMsgTs, // Store as Timestamp or null
-                     createdAt: createdTs, // Store as Timestamp or null
-                    otherParticipant: participantInfo ?
-                        { uid: otherUid, name: participantInfo.name, photoURL: participantInfo.photoURL } :
-                        { uid: otherUid, name: 'Loading...', photoURL: '', needsFetching: true }
+                    ...data, // Spread the rest of the conversation data
+                     lastMessageTimestamp: lastMsgTs,
+                     createdAt: createdTs,
+                    // Use the prepared participantInfo object (placeholder or existing)
+                    otherParticipant: participantInfo
                 });
             });
 
+             // Fetch profiles if any were marked
              if (profilePromises.length > 0) {
+                 console.log(`Workspaceing ${profilePromises.length} missing profiles...`);
                  try {
                      const profileResults = await Promise.all(profilePromises);
                      profileResults.forEach(result => {
                          const convIndex = convList.findIndex(c => c.id === result.convId);
                          if (convIndex !== -1) {
+                            const profileData = result.profileData;
                             convList[convIndex].otherParticipant = {
-                                uid: result.otherUid,
-                                name: result.profileData?.name || 'Unknown User',
-                                photoURL: result.profileData?.profilePictureUrl || '',
-                                needsFetching: false
+                                uid: result.otherUid, // Ensure UID is always present
+                                name: profileData?.name || 'Unknown User',
+                                photoURL: profileData?.profilePictureUrl || '',
+                                needsFetching: false // Mark as fetched (even if not found)
                             };
                         }
                      });
-                 } catch (profileFetchError) { console.error("Error fetching profiles:", profileFetchError); }
+                 } catch (profileFetchError) {
+                     console.error("Error fetching profiles in batch:", profileFetchError);
+                     // Handle error - maybe leave placeholders as 'Loading...' or set to 'Error'
+                 }
             }
-            // Set the state with the latest data from Firestore
-            // This will naturally overwrite the optimistic update eventually
+
             setConversations(convList);
             setLoadingConversations(false);
         }, (err) => {
@@ -256,7 +252,7 @@ const Inbox = () => {
 
     // Fetch messages when selectedConversation changes
     useEffect(() => {
-         if (!selectedConversation?.id) { // Check for ID
+         if (!selectedConversation?.id) {
             setMessages([]);
             setLoadingMessages(false);
             return () => {};
@@ -265,15 +261,14 @@ const Inbox = () => {
         setError('');
         const messagesQuery = query(
             collection(db, 'conversations', selectedConversation.id, 'messages'),
-            orderBy('timestamp', 'asc') // Oldest first
+            orderBy('timestamp', 'asc')
         );
         const unsubscribe = onSnapshot(messagesQuery, (querySnapshot) => {
             const msgList = querySnapshot.docs.map(docSnap => {
                  const data = docSnap.data();
-                 // Convert Timestamp to JS Date for rendering
                  const jsDate = data.timestamp instanceof Timestamp
                                  ? data.timestamp.toDate()
-                                 : (data.timestamp ? new Date(data.timestamp) : new Date()); // Fallback needed?
+                                 : (data.timestamp ? new Date(data.timestamp.seconds * 1000) : new Date()); // Handle Firestore Timestamp object
                 return { id: docSnap.id, ...data, timestamp: jsDate };
             });
             setMessages(msgList);
@@ -283,150 +278,183 @@ const Inbox = () => {
             setError(`Failed to load messages.`);
             setLoadingMessages(false);
         });
-        return () => unsubscribe(); // Clean up message listener
-    }, [selectedConversation]); // Re-run ONLY when selection changes
+        return () => unsubscribe();
+    }, [selectedConversation]);
 
 
     // Scroll effect for messages
     useEffect(() => {
         const timer = setTimeout(() => {
              messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        }, 100); // Slight delay
+        }, 100);
        return () => clearTimeout(timer);
-    }, [messages]); // Run when messages change
+    }, [messages]);
 
 
-    // handleSelectConversation - Selects conversation from the list
+    // --- handleSelectConversation (MODIFIED for mobile view switch) ---
     const handleSelectConversation = useCallback((conversation) => {
-         if (selectedConversation?.id === conversation.id) return; // Avoid re-selection
+        // Avoid re-selecting if already viewing THIS conversation on mobile
+        if (selectedConversation?.id === conversation.id && mobileView === 'conversation') {
+             console.log("Conversation already selected and viewed.");
+             return;
+        }
 
-          // Fetch profile if needed (marked as needsFetching)
-          if (conversation.otherParticipant?.needsFetching && conversation.otherParticipant?.uid) {
-              setLoadingMessages(true); // Optional: indicate loading
-              getDoc(doc(db, 'profiles', conversation.otherParticipant.uid))
-                .then(profileSnap => {
-                    const profileData = profileSnap.exists() ? profileSnap.data() : {};
-                     setSelectedConversation({
-                         id: conversation.id,
-                         otherParticipant: {
-                            uid: conversation.otherParticipant.uid,
-                            name: profileData.name || 'Unknown User',
-                            photoURL: profileData.profilePictureUrl || '',
-                         }
-                    });
-                })
-                .catch(err => {
-                     console.error("Error fetching profile on selection:", err);
-                     setSelectedConversation({ // Fallback
-                          id: conversation.id,
-                          otherParticipant: { uid: conversation.otherParticipant.uid, name: 'Unknown User', photoURL: '', }
-                     });
-                })
-                .finally(() => setLoadingMessages(false));
-         } else if (conversation.otherParticipant?.uid) {
-              // Use existing data if available and no fetching needed
-              setSelectedConversation({ id: conversation.id, otherParticipant: conversation.otherParticipant });
-         } else {
-             console.error("Cannot select conversation, missing UID.", conversation);
-             setError("Error selecting conversation.");
-         }
-    }, [selectedConversation?.id]); // Dependency ensures stability
+        console.log("Selecting conversation:", conversation);
+
+        const processSelection = (profileData) => {
+            const otherPData = profileData || {}; // Use empty object as fallback
+             console.log("Processing selection with profile data:", otherPData);
+            setSelectedConversation({
+                id: conversation.id,
+                otherParticipant: {
+                    uid: conversation.otherParticipant.uid, // Use UID from conversation object
+                    name: otherPData.name || 'Unknown User', // Use fetched/existing name
+                    photoURL: otherPData.profilePictureUrl || otherPData.photoURL || '', // Use fetched/existing photo
+                }
+            });
+            setMobileView('conversation'); // <<<--- SWITCH VIEW ON MOBILE
+             console.log("Mobile view set to 'conversation'");
+        };
+
+        // Check if participant data is valid and needs fetching
+        if (!conversation.otherParticipant || !conversation.otherParticipant.uid) {
+             console.error("Cannot select conversation, missing otherParticipant data or UID.", conversation);
+             setError("Error selecting conversation details.");
+             return;
+        }
 
 
-    // handleSendMessage - Sends a new message
+        if (conversation.otherParticipant.needsFetching) {
+             console.log(`Needs fetching profile for UID: ${conversation.otherParticipant.uid}`);
+            setLoadingMessages(true); // Show loading indicator while fetching profile
+            getDoc(doc(db, 'profiles', conversation.otherParticipant.uid))
+              .then(profileSnap => {
+                  console.log(`Profile fetched for ${conversation.otherParticipant.uid}, exists: ${profileSnap.exists()}`);
+                  processSelection(profileSnap.exists() ? profileSnap.data() : null);
+              })
+              .catch(err => {
+                   console.error("Error fetching profile on selection:", err);
+                   processSelection(null); // Process with fallback data on error
+              })
+              .finally(() => setLoadingMessages(false));
+        } else {
+             console.log("Using existing profile data for selection.");
+             // Use existing profile data directly (passed within conversation object)
+             processSelection(conversation.otherParticipant);
+        }
+    }, [selectedConversation?.id, mobileView]); // Add mobileView dependency
+
+
+    // Handle Sending Message
     const handleSendMessage = async (e) => {
          e.preventDefault();
         const messageText = newMessage.trim();
-         // Validation
          if (!messageText || !currentUser || !selectedConversation?.id || !selectedConversation.otherParticipant?.uid) {
-            setError("Cannot send message."); return;
+            setError("Cannot send message. Missing user, selection, or recipient ID.");
+             console.error("Send Message Aborted: Missing required data", {currentUser, selectedConversation});
+            return;
          }
          setError('');
-         setNewMessage(''); // Clear input
+         setNewMessage('');
 
-         // Prepare refs and data
          const conversationRef = doc(db, 'conversations', selectedConversation.id);
          const messagesColRef = collection(conversationRef, 'messages');
          const messageData = {
              senderUid: currentUser.uid,
              receiverUid: selectedConversation.otherParticipant.uid,
              text: messageText,
-             timestamp: serverTimestamp(), // Use server time
+             timestamp: serverTimestamp(),
              isRead: false,
          };
          const conversationUpdateData = {
              lastMessageText: messageText.length > 50 ? messageText.substring(0, 47) + '...' : messageText,
-             lastMessageTimestamp: serverTimestamp(), // Use server time
+             lastMessageTimestamp: serverTimestamp(),
+             // Update participantInfo minimally if needed, e.g., read status per participant
          };
 
          try {
-             // Add message and update conversation metadata
-             // Consider using a batch write for atomicity in production
              await addDoc(messagesColRef, messageData);
              await updateDoc(conversationRef, conversationUpdateData);
              console.log("Message sent!");
-             messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); // Scroll after sending
+             // Optionally scroll immediately
+             // messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
          } catch (err) {
              console.error("Error sending message:", err);
              setError(`Failed to send message: ${err.message}`);
-             setNewMessage(messageText); // Restore message on error
+             setNewMessage(messageText); // Restore message input on error
          }
     };
 
 
-    // formatTimestamp - Helper for displaying time
-    const formatTimestamp = (ts) => { // Expects a Firestore Timestamp object
+    // Format Timestamp Helper
+    const formatTimestamp = (ts) => {
         if (!ts || !(ts instanceof Timestamp)) return '...';
-        const date = ts.toDate(); // Convert to JS Date
-        // Format as needed, e.g., just time
-        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        const date = ts.toDate();
+        // Example: return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+         return date.toLocaleDateString([], { month: 'short', day: 'numeric' }); // Or just date
     };
 
+    // --- NEW: Handle Back Button Click on Mobile ---
+    const handleGoBackToList = () => {
+        setMobileView('list');
+        setSelectedConversation(null); // Clear selection when going back to list view
+         console.log("Mobile view set back to 'list'");
+    }
 
-    // --- JSX Rendering ---
+    // --- JSX Rendering (MODIFIED) ---
     return (
-        <div className="w-full h-full flex border border-base-300 rounded-lg overflow-hidden bg-base-100">
+        // Use flex layout only on medium screens and up
+        // Ensure parent container allows height: e.g., h-full or specific height
+        <div className="w-full h-full mt-12 md:mt-0 md:flex border border-base-300 rounded-lg overflow-hidden bg-base-100">
 
             {/* Conversation List Sidebar */}
-            <div className="w-1/3 border-r border-base-300 flex flex-col bg-base-200/50">
-                <h2 className="text-lg font-semibold p-3 border-b border-base-300 flex-shrink-0 text-center">
+            {/* --- MODIFIED: Conditional display based on screen size and mobileView state --- */}
+            <div className={`
+                ${mobileView === 'list' ? 'block' : 'hidden'} md:block
+                w-full md:w-1/3 border-r border-base-300 flex flex-col bg-base-200/50 h-full
+            `}>
+                <h2 className="text-lg font-semibold p-3 border-b border-base-300 flex-shrink-0 text-center sticky top-0 md:bg-base-200/80 backdrop-blur-sm z-10">
                     Inbox
                 </h2>
+                {/* Make the list scrollable */}
                 <div className="overflow-y-auto flex-grow">
                     {loadingConversations ? (
-                        <div className="p-4 text-center"><span className="loading loading-dots loading-md"></span></div>
+                        <div className="p-4 text-center pt-10"><span className="loading loading-dots loading-md"></span></div>
                     ) : conversations.length === 0 ? (
-                         <p className="p-4 text-sm text-base-content/70 text-center italic">No conversations yet.</p>
+                         <p className="p-4 text-sm text-base-content/70 text-center italic mt-10">No conversations yet.</p>
                     ) : (
                         <ul>
                             {conversations.map(conv => (
                                 <li key={conv.id}
-                                    // Apply highlight if selected
+                                    // Highlight applies based on selectedConversation state
                                     className={`block border-b border-base-300 cursor-pointer transition duration-150 ease-in-out ${selectedConversation?.id === conv.id ? 'bg-primary/20' : 'hover:bg-base-300/70'}`}
-                                    onClick={() => handleSelectConversation(conv)}
+                                    onClick={() => handleSelectConversation(conv)} // Use updated handler
                                 >
-                                     {/* Check if participant data is loaded */}
-                                     {conv.otherParticipant ? (
+                                     {/* Check if participant data exists and has a UID */}
+                                     {conv.otherParticipant?.uid ? (
                                          <div className="flex items-center gap-3 p-3">
                                             {/* Avatar */}
                                             <div className="avatar flex-shrink-0">
                                                 <div className="w-10 rounded-full ring ring-primary/50 ring-offset-base-100 ring-offset-1">
-                                                    <img src={conv.otherParticipant?.photoURL || "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"} alt={conv.otherParticipant?.name || 'User'} />
+                                                    {conv.otherParticipant?.photoURL ? (
+                                                         <img src={conv.otherParticipant.photoURL} alt={conv.otherParticipant?.name || 'User'} />
+                                                    ) : (
+                                                         <DefaultAvatar className="w-10 h-10" />
+                                                    )}
                                                 </div>
                                             </div>
                                             {/* Name & Last Message */}
                                             <div className="flex-grow overflow-hidden">
-                                                <p className="font-medium text-sm truncate">{conv.otherParticipant?.name || 'Loading...'}</p>
-                                                <p className="text-xs text-base-content/60 truncate mt-1">{conv.lastMessageText || '...'}</p>
+                                                <p className="font-medium text-sm truncate">{conv.otherParticipant?.name || '...'}</p>
+                                                <p className="text-xs text-base-content/60 truncate mt-1">{conv.lastMessageText || 'No messages yet'}</p>
                                             </div>
                                             {/* Timestamp */}
-                                            <span className="text-xs text-base-content/50 flex-shrink-0 ml-1 self-start pt-1">
-                                                {/* Format the stored Timestamp object */}
+                                            <span className="text-[10px] text-base-content/50 flex-shrink-0 ml-1 self-start pt-1">
                                                 {formatTimestamp(conv.lastMessageTimestamp)}
                                             </span>
                                          </div>
                                      ) : (
-                                         <div className="p-3 text-xs text-error">Error loading participant</div>
+                                         <div className="p-3 text-xs text-error">Error loading participant info</div> // Fallback if data is bad
                                      )}
                                 </li>
                             ))}
@@ -438,44 +466,62 @@ const Inbox = () => {
             </div>
 
             {/* Message View Area */}
-            <div className="w-2/3 flex flex-col bg-base-100">
+            {/* --- MODIFIED: Conditional display based on screen size and mobileView state --- */}
+            <div className={`
+                 ${mobileView === 'conversation' ? 'flex' : 'hidden'} md:flex  // Use flex here for column layout
+                 flex-col // Ensure vertical layout
+                 w-full md:w-2/3 bg-base-100 h-full
+            `}>
                 {selectedConversation ? (
                     <>
-                        {/* Chat Header */}
-                        <div className="p-3 border-b border-base-300 flex items-center gap-3 flex-shrink-0 bg-base-200/30">
-                           <div className="avatar">
+                        {/* Chat Header --- MODIFIED --- */}
+                        <div className="p-2 md:p-3 border-b border-base-300 flex items-center gap-2 sm:gap-3 flex-shrink-0 bg-base-200/30 sticky top-0 backdrop-blur-sm z-10">
+                            {/* --- Back Button (Mobile Only) --- */}
+                            <button
+                                onClick={handleGoBackToList}
+                                className="btn btn-ghost btn-sm btn-circle md:hidden mr-1" // Hide on md and up
+                                aria-label="Back to conversations list"
+                            >
+                                <BackIcon />
+                            </button>
+                            {/* --- Avatar --- */}
+                           <div className="avatar flex-shrink-0">
                                <div className="w-8 rounded-full">
-                                   <img src={selectedConversation.otherParticipant?.photoURL || "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"} alt={selectedConversation.otherParticipant?.name} />
+                                    {selectedConversation.otherParticipant?.photoURL ? (
+                                         <img src={selectedConversation.otherParticipant.photoURL} alt={selectedConversation.otherParticipant?.name} />
+                                    ) : (
+                                         <DefaultAvatar className="w-8 h-8" />
+                                    )}
                                </div>
                            </div>
-                           <p className="font-semibold">{selectedConversation.otherParticipant?.name || '...'}</p>
+                           {/* --- Name --- */}
+                           <p className="font-semibold text-sm sm:text-base flex-grow truncate">{selectedConversation.otherParticipant?.name || '...'}</p> {/* Allow name to take space and truncate */}
                         </div>
 
                         {/* Messages Container */}
-                        <div className="flex-grow overflow-y-auto p-4 space-y-4">
+                        <div className="flex-grow overflow-y-auto p-2 md:p-4 space-y-4">
                             {loadingMessages ? (
-                                 <div className="flex justify-center items-center h-full"><span className="loading loading-dots loading-lg"></span></div>
+                                 <div className="flex justify-center items-center h-full pt-10"><span className="loading loading-dots loading-lg"></span></div>
                             ) : messages.length === 0 ? (
                                  <p className="text-center text-base-content/60 italic mt-10">No messages in this conversation yet.</p>
                             ) : (
                                 messages.map(msg => (
                                     <div key={msg.id} className={`chat ${msg.senderUid === currentUser?.uid ? 'chat-end' : 'chat-start'}`}>
+                                        {/* Optionally add chat image/header here if needed */}
                                         <div className={`chat-bubble text-sm md:text-base ${msg.senderUid === currentUser?.uid ? 'chat-bubble-primary' : 'chat-bubble-secondary'}`}>
                                             {msg.text}
-                                            <time className="text-xs opacity-60 block mt-1 text-right">
-                                                 {/* Format timestamp from JS Date object */}
+                                            <time className="text-[10px] opacity-60 block mt-1 text-right">
                                                  {msg.timestamp instanceof Date ? msg.timestamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '...'}
                                             </time>
                                         </div>
                                     </div>
                                 ))
                             )}
-                            {/* Scroll anchor */}
-                            <div ref={messagesEndRef} />
+                            <div ref={messagesEndRef} /> {/* Scroll anchor */}
                         </div>
 
                         {/* Message Input Form */}
-                         <form onSubmit={handleSendMessage} className="p-3 border-t border-base-300 flex gap-2 flex-shrink-0 bg-base-200/30">
+                         <form onSubmit={handleSendMessage} className="p-3 border-t border-base-300 flex gap-2 flex-shrink-0 bg-base-200/50 sticky bottom-0">
                             <input
                                 type="text"
                                 placeholder="Type your message..."
@@ -492,7 +538,7 @@ const Inbox = () => {
                                 aria-label="Send message"
                             >
                                 Send
-                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4 ml-1">
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4 ml-1 hidden sm:inline"> {/* Hide icon on very small screens */}
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
                                  </svg>
                             </button>
@@ -501,8 +547,8 @@ const Inbox = () => {
                          {error && error.includes('message') && <p className="p-2 text-xs text-error text-center flex-shrink-0">{error}</p>}
                     </>
                 ) : (
-                    // Placeholder when no conversation is selected
-                    <div className="flex items-center justify-center h-full">
+                    // Placeholder when no conversation is selected (only visible on desktop now)
+                    <div className="hidden md:flex items-center justify-center h-full">
                         <p className="text-base-content/60">Select a conversation to view messages.</p>
                     </div>
                 )}
