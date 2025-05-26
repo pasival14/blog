@@ -119,10 +119,10 @@ const PostForm = ({ title, setTitle, content, setContent, excerpt, setExcerpt, s
     <form onSubmit={handleSubmit} className='w-full h-full'>
       {/* Title Input */}
       <div className='w-full'>
-        <label className='text-lg block'>Title</label>
+        <label className='md:text-lg block'>Title</label>
         <input
           type="text"
-          className='my-2 bg-base-100 w-full h-[45px] textarea-lg rounded-lg'
+          className='my-2 bg-base-100 w-full h-[30px] md:h-[45px] border md:border-2 md:textarea-lg rounded md:rounded-lg'
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
@@ -131,13 +131,13 @@ const PostForm = ({ title, setTitle, content, setContent, excerpt, setExcerpt, s
 
       {/* Image Upload */}
       <div>
-        <label className='text-lg block'>Main Image</label>
+        <label className='md:text-lg block'>Main Image</label>
         <input className='my-2' type="file" accept="image/*" onChange={handleImageChange} />
       </div>
 
       {/* Content Editor */}
       <div>
-        <label className='text-lg block'>Content</label>
+        <label className='md:text-lg block'>Content</label>
         <ReactQuill
           value={content}
           onChange={(value) => setContent(value)}
@@ -149,10 +149,10 @@ const PostForm = ({ title, setTitle, content, setContent, excerpt, setExcerpt, s
 
       {/* Excerpt Input */}
       <div>
-        <label className='text-lg block'>Excerpt</label>
+        <label className='md:text-lg block'>Excerpt</label>
         <input
           type="text"
-          className='my-2 bg-base-100 w-full h-[45px] textarea-lg rounded-lg'
+          className='my-2 bg-base-100 w-full h-[30px] md:h-[45px] border md:border-2 md:textarea-lg rounded md:rounded-lg'
           value={excerpt}
           onChange={(e) => setExcerpt(e.target.value)}
           required
@@ -160,7 +160,7 @@ const PostForm = ({ title, setTitle, content, setContent, excerpt, setExcerpt, s
       </div>
 
       {/* Submit Button */}
-      <div className='w-full flex justify-center my-5'>
+      <div className='w-full flex justify-center my-2 md:my-5'>
         <button className='btn btn-success' type="submit" disabled={uploading}>
           {uploading ? 'Uploading...' : 'Create Post'}
         </button>

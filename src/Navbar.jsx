@@ -71,7 +71,7 @@ const Navbar = ({ isAuth, handleLogout }) => {
     return (
         <div className="navbar bg-base-100 shadow-sm sticky top-0 z-50"> {/* Made navbar sticky */}
             <div className="navbar-start">
-                <Link className="btn btn-ghost text-xl font-bold" to="/">
+                <Link className="min-h-[24px] md:btn md:btn-ghost ml-1 md:ml-0 text-xl md:text-2xl font-bold" to="/">
                     explain
                 </Link>
             </div>
@@ -83,7 +83,8 @@ const Navbar = ({ isAuth, handleLogout }) => {
                     <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </div>
-                    <div tabIndex={0} className="mt-3 z-[1] card card-compact dropdown-content w-64 bg-base-100 shadow">
+                    {/* UPDATED: Made dropdown width responsive */}
+                    <div tabIndex={0} className="mt-3 z-[1] card card-compact dropdown-content w-full sm:w-64 bg-base-100 shadow">
                         <div className="card-body p-2">
                              <form onSubmit={handleSearch} className="join w-full">
                                 <input
@@ -131,7 +132,9 @@ const Navbar = ({ isAuth, handleLogout }) => {
                                 <img src={userPhotoURL} alt="User Avatar" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-base-300 text-primary">
-                                     <GoogleIcon />
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-base-content opacity-50" /* Adjusted size and styling */ fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                  </svg>
                                  </div>
                             )}
                         </div>

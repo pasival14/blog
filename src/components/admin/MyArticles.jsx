@@ -95,8 +95,8 @@ const MyArticles = () => {
   }, [allUserPosts, searchTerm]); // Dependencies for memoization
 
   return (
-    <div className="w-full h-full flex flex-col p-4">
-      <h2 className="text-2xl font-semibold mb-4">My Articles</h2>
+    <div className="w-full h-full mt-12 md:mt-0 flex flex-col p-2 md:p-4">
+      <h2 className="text-xl md:text-2xl font-semibold mb-4">My Articles</h2>
 
       {/* Search Bar */}
       <div className="mb-4">
@@ -126,7 +126,7 @@ const MyArticles = () => {
                 {/* Post Info */}
                 <div className='flex-grow'> {/* Allow title section to grow */}
                    <Link to={`/post/${post.id}`} className='hover:underline'>
-                     <h3 className='font-semibold text-lg mb-1'>{post.title}</h3>
+                     <h3 className='font-semibold md:text-lg mb-1'>{post.title}</h3>
                    </Link>
                    <p className='text-xs text-gray-500 mb-2'>
                      Created: {post.createdAt instanceof Date ? post.createdAt.toLocaleDateString() : 'Unknown date'}

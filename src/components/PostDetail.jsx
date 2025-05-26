@@ -326,7 +326,7 @@ const PostDetail = () => {
 
 
   return (
-      <div className="post-detail w-full flex flex-col items-center justify-center p-4 md:px-6 mb-10">
+      <div className="post-detail overscroll-none w-full flex flex-col items-center justify-center p-2 md:p-4 md:px-6 mb-6 md:mb-10">
         <div className='w-full lg:w-[70%] xl:w-[60%]'> {/* Adjusted width */}
 
            {/* --- Poster Info Display (Linked) --- */}
@@ -363,8 +363,8 @@ const PostDetail = () => {
            {/* --- END Poster Info --- */}
 
 
-          <h1 className='text-3xl md:text-4xl font-bold mb-2'>{post.title}</h1>
-          <p className="text-sm text-gray-500 mb-4">Views: {viewCount}</p>
+          <h1 className='text-xl md:text-4xl font-bold mb-2'>{post.title}</h1>
+          <p className="text-xs md:text-sm text-gray-500 mb-2 md:mb-4">Views: {viewCount}</p>
 
           {/* Display specific fetch error if post loaded but content/comments failed */}
           {error && <p className="text-center text-warning my-4">{error.includes('comments') || error.includes('content') ? error : ''}</p>}
@@ -372,14 +372,14 @@ const PostDetail = () => {
 
           {post.imageUrl && (
             <div
-              className='w-full h-[50vw] md:h-[60vh] bg-cover bg-center rounded-lg mb-6 shadow-md'
+              className='w-full h-[40vh] md:h-[60vh] bg-cover bg-center rounded md:rounded-lg mb-6 shadow-md'
               style={{ backgroundImage: `url(${post.imageUrl})` }}
               aria-label={`Featured image for ${post.title}`}
             />
           )}
 
           <div
-            className='text-balance mt-4 post-content prose lg:prose-lg max-w-none'
+            className=' mt-4 post-content prose lg:prose-lg max-w-none'
             dangerouslySetInnerHTML={{ __html: contentHtml }}
           />
 
@@ -395,17 +395,25 @@ const PostDetail = () => {
 
            {/* --- Comments Section --- */}
            <div className="mt-8 pt-6 border-t">
-                <h2 className="text-xl font-semibold mb-4">Comments ({comments.length})</h2>
+                <h2 className="md:text-xl font-semibold mb-4">Comments ({comments.length})</h2>
 
                  {submitError && <p className="alert alert-error text-sm p-3 mb-4 shadow-md">{submitError}</p>}
 
 
                  {/* Comment Form */}
                 {currentUser ? (
-                 <form onSubmit={handleCommentSubmit} className="mb-6 flex items-start gap-3">
+                 <form onSubmit={handleCommentSubmit} className="mb-4 md:mb-6 flex items-start gap-3">
                     <div className="avatar flex-shrink-0 mt-1">
                         <div className="w-9 h-9 rounded-full">
-                            <img src={currentUser.photoURL || "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"} alt="Your avatar" />
+                          {currentUser.photoURL ? (
+                              <img src={currentUser.photoURL} alt={currentUser.displayName} className="w-full h-full object-cover" /> // Keep existing image logic
+                              ) : (
+                              // *** START: Replace the default image with the user's SVG ***
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-base-content opacity-50" /* Adjusted size slightly for the 8x8 container */ fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                              </svg>
+                              // *** END: Replacement ***
+                            )}
                         </div>
                     </div>
                     <div className="flex-grow">
@@ -429,10 +437,18 @@ const PostDetail = () => {
                 <div className="space-y-4">
                   {comments.length > 0 ? (
                     comments.map(comment => (
-                      <div key={comment.id} className="p-3 bg-base-200 rounded-lg shadow-sm relative group flex gap-3 items-start"> {/* items-start */}
+                      <div key={comment.id} className="p-2 md:p-3 bg-base-200 rounded-lg shadow-sm relative group flex gap-3 items-start"> {/* items-start */}
                           <div className="avatar flex-shrink-0 mt-1">
                               <div className="w-8 h-8 rounded-full">
-                                  <img src={comment.userPhotoURL || "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"} alt={comment.userName} />
+                                {currentUser.photoURL ? (
+                                  <img src={currentUser.photoURL} alt={currentUser.displayName} className="w-full h-full object-cover" /> // Keep existing image logic
+                                  ) : (
+                                  // *** START: Replace the default image with the user's SVG ***
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-base-content opacity-50" /* Adjusted size slightly for the 8x8 container */ fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                  </svg>
+                                  // *** END: Replacement ***
+                                )}
                               </div>
                           </div>
 
@@ -450,7 +466,7 @@ const PostDetail = () => {
                                       </button>
                                   )}
                               </div>
-                              <p className="text-xs text-gray-500 mb-1">
+                              <p className="text-[8px] md:text-xs text-gray-500 mb-1">
                                   {comment.createdAt?.toLocaleTimeString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' })}
                               </p>
                               <p className='text-sm whitespace-pre-wrap break-words'>{comment.text}</p>

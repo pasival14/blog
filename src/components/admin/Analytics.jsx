@@ -193,8 +193,8 @@ const Analytics = () => {
 
   return (
     // Added pb-6 for bottom padding
-    <div className="w-full h-full flex flex-col p-4 gap-6 overflow-y-auto pb-6">
-      <h2 className="text-2xl font-semibold">Analytics Overview</h2>
+    <div className="mt-12 md:mt-0 w-full h-full flex flex-col p-2 md:p-4 gap-6 overflow-y-auto pb-6">
+      <h2 className="text-xl md:text-2xl font-semibold">Analytics Overview</h2>
 
       {error && <div className="alert alert-error shadow-md">{error}</div>}
 
@@ -213,11 +213,11 @@ const Analytics = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* --- Stat Cards remain the same as before --- */}
                     {/* Total Posts Card */}
-                     <div className="stats shadow bg-base-100 overflow-hidden"> <div className="stat"> <div className="stat-figure text-info"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block size-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div> <div className="stat-title">Total Articles</div> <div className="stat-value text-info">{stats.totalPosts}</div> </div> </div>
+                     <div className="stats shadow bg-base-100 overflow-hidden"> <div className="stat"> <div className="stat-figure text-info"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block size-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div> <div className="stat-title">Total Articles</div> <div className="stat-value text-lg md:text-xl text-info">{stats.totalPosts}</div> </div> </div>
                      {/* Total Views Card */}
-                     <div className="stats shadow bg-base-100"> <div className="stat"> <div className="stat-figure text-success"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block size-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg></div> <div className="stat-title">Total Views</div> <div className="stat-value text-success">{stats.totalViews.toLocaleString()}</div> </div> </div>
+                     <div className="stats shadow bg-base-100"> <div className="stat"> <div className="stat-figure text-success"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block size-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg></div> <div className="stat-title">Total Views</div> <div className="stat-value text-lg md:text-xl text-success">{stats.totalViews.toLocaleString()}</div> </div> </div>
                      {/* Total Likes Card */}
-                     <div className="stats shadow bg-base-100"> <div className="stat"> <div className="stat-figure text-error"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block size-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg></div> <div className="stat-title">Total Likes</div> <div className="stat-value text-error">{stats.totalLikes.toLocaleString()}</div> </div> </div>
+                     <div className="stats shadow bg-base-100"> <div className="stat"> <div className="stat-figure text-error"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block size-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg></div> <div className="stat-title">Total Likes</div> <div className="stat-value text-lg md:text-xl text-error">{stats.totalLikes.toLocaleString()}</div> </div> </div>
                 </div>
 
                 {/* Top Performing Articles Table */}

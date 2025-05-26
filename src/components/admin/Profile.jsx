@@ -125,15 +125,15 @@ const Profile = () => {
     };
 
     return (
-        <div className="w-full h-full p-4 overflow-y-auto">
-            <h2 className="text-2xl font-semibold mb-6">Edit Profile</h2>
+        <div className="w-full h-full mt-12 md:mt-0 p-2 md:p-4 overflow-y-auto">
+            <h2 className="text-xl md:text-2xl text-center md:text-left font-semibold mb-6">Edit Profile</h2>
             {error && <div className="alert alert-error mb-4">{error}</div>}
             {success && <div className="alert alert-success mb-4">{success}</div>}
 
             <form onSubmit={handleUpdateProfile} className="space-y-4">
                 {/* Profile Picture */}
                 <div className="flex flex-col items-center space-y-2">
-                    <div className="w-24 h-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 flex items-center justify-center bg-base-300 overflow-hidden"> {/* Added h-24, flex, items-center, justify-center, bg-base-300, overflow-hidden */}
+                    <div className="w-20 md:w-24 h-20 md:h-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 flex items-center justify-center bg-base-300 overflow-hidden"> {/* Added h-24, flex, items-center, justify-center, bg-base-300, overflow-hidden */}
                         {profilePictureUrl ? (
                             <img src={profilePictureUrl} alt="Profile Preview" className="w-full h-full object-cover" /> // Added className for object-cover
                         ) : (
@@ -147,7 +147,7 @@ const Profile = () => {
                         type="file"
                         accept="image/*"
                         onChange={handleImageChange}
-                        className="file-input file-input-bordered file-input-sm w-full max-w-xs"
+                        className="file-input file-input-bordered file-input-sm w-full max-w-[250px] md:max-w-xs"
                         disabled={loading}
                     />
                     {uploadProgress > 0 && <progress className="progress progress-primary w-56" value={uploadProgress} max="100"></progress>}
