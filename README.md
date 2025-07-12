@@ -43,24 +43,43 @@ Project Structure
 ├── functions/                # Firebase Cloud Functions
 
 │   ├── index.js              # Main entry point for all cloud functions
+
 │   └── package.json
+
 ├── public/
+
 ├── src/
+
 │   ├── components/
+
 │   │   ├── admin/            # Components for the Admin Panel
+
 │   │   ├── AdminPanel.jsx
+
 │   │   ├── Home.jsx
+
 │   │   ├── Login.jsx
+
 │   │   ├── PostDetail.jsx
+
 │   │   ├── PostForm.jsx
+
 │   │   └── SearchResults.jsx
+
 │   ├── services/
+
 │   │   └── firebase.js       # Firebase initialization and configuration
+
 │   ├── App.jsx               # Main application component with routing
+
 │   ├── main.jsx              # Application entry point
+
 │   └── index.css             # Global styles
+
 ├── .firebaserc
+
 ├── firebase.json             # Firebase project configuration
+
 └── package.json
 
 
