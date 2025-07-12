@@ -41,6 +41,7 @@ Project Structure
 
 /
 ├── functions/                # Firebase Cloud Functions
+
 │   ├── index.js              # Main entry point for all cloud functions
 │   └── package.json
 ├── public/
