@@ -67,8 +67,8 @@ Setup and Installation
 
 1.  Clone the repository:
     ```bash
-    git clone <your-repository-url>
-    cd <repository-directory>
+    git clone github.com/pasival14/blog
+    cd blog
     ```
 
 2.  Install Frontend Dependencies:
