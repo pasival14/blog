@@ -1,4 +1,4 @@
-Blog Platform
+Blog Platform (https://blog-roan-eta-23.vercel.app/)
 
 This is a feature-rich, scalable blog platform built with a modern tech stack including React for the frontend and Firebase for the backend. It incorporates advanced features like full-text search with Algolia, personalized content recommendations, and a comprehensive admin panel for content and user management.
 
