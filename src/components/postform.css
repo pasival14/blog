@@ -14,4 +14,11 @@
     display: block;
     object-fit: cover;
   }
+
+.post-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em auto;
+}
   
