@@ -1,50 +1,37 @@
 // src/components/SearchResults.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-// --- Import Firebase Functions SDK ---
-import { getFunctions, httpsCallable } from "firebase/functions";
-
-// --- Initialize Firebase Functions ---
-const functions = getFunctions();
-
-// --- Reference your Cloud Function (name should still be 'searchPosts') ---
-const searchPostsCallable = httpsCallable(functions, 'searchPosts');
+import { db } from '../services/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 const SearchResults = () => {
     const [searchParams] = useSearchParams();
-    const query = searchParams.get('q');
+    const query = searchParams.get('q') || '';
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
     const performSearch = useCallback(async () => {
-        if (!query) {
+        if (!query.trim()) {
             setResults([]); setError(null); setLoading(false);
             return;
         }
         setLoading(true); setError(null); setResults([]);
-
         try {
-            console.log(`Calling Algolia-backed search function for: ${query}`);
-
-            // --- Call your Cloud Function ---
-            const response = await searchPostsCallable({ query: query });
-            const searchData = response.data; // Data directly from v2 onCall return
-            // -----------------------------
-
-            if (Array.isArray(searchData)) {
-                console.log(`Received ${searchData.length} results from backend.`);
-                // Algolia results (mapped in backend) should have fields like id, title, etc.
-                setResults(searchData);
-            } else {
-                 console.error("Search function response.data is not an array:", searchData);
-                 setResults([]);
-                 setError("Received invalid search results format.");
-            }
+            // Fetch all posts from Firestore
+            const postsSnapshot = await getDocs(collection(db, 'posts'));
+            const allPosts = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // Filter posts where title or excerpt contains the query (case-insensitive)
+            const lowerQuery = query.trim().toLowerCase();
+            const filtered = allPosts.filter(post => {
+                const title = (post.title || '').toLowerCase();
+                const excerpt = (post.excerpt || '').toLowerCase();
+                return title.includes(lowerQuery) || excerpt.includes(lowerQuery);
+            });
+            setResults(filtered);
         } catch (err) {
-            console.error("Search failed:", err);
-            const message = err.message || 'An unknown error occurred.';
-            setError(`Search failed: ${message}`);
+            console.error('Search failed:', err);
+            setError('Search failed: ' + (err.message || 'An unknown error occurred.'));
             setResults([]);
         } finally {
             setLoading(false);
@@ -55,7 +42,7 @@ const SearchResults = () => {
         performSearch();
     }, [performSearch]);
 
-    // --- Render Card (ensure fields match data indexed in Algolia) ---
+    // --- Render Card (ensure fields match data indexed in Firestore) ---
     const renderResultCard = (post) => (
          <Link to={`/post/${post.id}`} key={post.id} className="card bg-base-200 shadow-md hover:shadow-lg transition-shadow duration-200 ease-in-out flex flex-row items-start gap-4 p-3">
              {post.imageUrl ? (
@@ -87,17 +74,21 @@ const SearchResults = () => {
     // --- Main Render Logic (remains the same) ---
     return (
         <div className="container mx-auto p-4 md:p-6 min-h-[calc(100vh-128px)]">
-             {/* ... Title, Loading, Error, No Results ... */}
              <h1 className="text-2xl md:text-3xl font-bold mb-6 border-b pb-3">
                 Search Results {query ? <>for: <span className="text-primary font-semibold">{query}</span></> : ''}
             </h1>
-             {/* ... */}
-             {!loading && !error && results.length > 0 && (
+            {loading && (
+                <div className="flex items-center gap-2"><span className="loading loading-spinner loading-sm"></span><span>Searching...</span></div>
+            )}
+            {error && <div className="alert alert-error my-4">{error}</div>}
+            {!loading && !error && results.length === 0 && query && (
+                <div className="text-base-content/70 italic">No results found for "{query}".</div>
+            )}
+            {!loading && !error && results.length > 0 && (
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {results.map(renderResultCard)}
                  </div>
             )}
-             {/* ... */}
         </div>
     );
 };
